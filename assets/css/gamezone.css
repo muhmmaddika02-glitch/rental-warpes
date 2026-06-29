@@ -1,0 +1,95 @@
+:root {
+    --gamezone-primary: #7C3AED;
+    --gamezone-secondary: #06B6D4;
+    --gamezone-accent: #22C55E;
+    --gamezone-dark: #0F172A;
+}
+
+.badge-membership-bronze {
+    background-color: #CD7F32;
+    color: white;
+}
+
+.badge-membership-silver {
+    background-color: #C0C0C0;
+    color: #333;
+}
+
+.badge-membership-gold {
+    background-color: #FFD700;
+    color: #333;
+}
+
+.device-card {
+    transition: transform 0.2s;
+}
+
+.device-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.stat-card {
+    border-left: 4px solid var(--gamezone-primary);
+}
+
+.booking-status-pending {
+    border-left: 4px solid #ffc107;
+}
+
+.booking-status-confirmed {
+    border-left: 4px solid #0d6efd;
+}
+
+.booking-status-completed {
+    border-left: 4px solid #198754;
+}
+
+.booking-status-cancelled {
+    border-left: 4px solid #dc3545;
+}
+
+.qr-code-wrapper {
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+    padding-bottom: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--gamezone-primary);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

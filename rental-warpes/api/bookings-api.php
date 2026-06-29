@@ -37,27 +37,17 @@ try {
                 if ($status === 'playing') {
                     $stmt = $pdo->prepare("UPDATE devices SET status = 'playing' WHERE id = ?");
                     $stmt->execute([$booking['device_id']]);
-                    
-                    addNotification($booking['user_id'], 'Session Started', 'Your gaming session for booking #' . $bookingId . ' has started. Have fun!', 'booking_confirmation');
                 } elseif ($status === 'completed') {
                     $stmt = $pdo->prepare("UPDATE devices SET status = 'available' WHERE id = ?");
                     $stmt->execute([$booking['device_id']]);
                     
                     $stmt = $pdo->prepare("UPDATE users SET points = points + FLOOR(? / 10000) WHERE id = ?");
                     $stmt->execute([$booking['total_price'], $booking['user_id']]);
-                    
-                    addNotification($booking['user_id'], 'Session Completed', 'Your gaming session for booking #' . $bookingId . ' has ended. Please leave a review!', 'system');
                 }
                 
-                $response = ['success' => true, 'message' => 'Status updated to ' . $status . '.'];
+                $response = ['success' => true, 'message' => 'Status updated.'];
             }
         }
-    } elseif ($action === 'count') {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM notifications WHERE user_id = ? AND is_read = FALSE");
-        $stmt->execute([getCurrentUserId()]);
-        $count = $stmt->fetch()['total'];
-        
-        $response = ['success' => true, 'count' => (int)$count];
     } else {
         $response = ['success' => false, 'message' => 'Unknown action.'];
     }
