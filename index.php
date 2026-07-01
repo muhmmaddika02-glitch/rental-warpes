@@ -247,7 +247,7 @@ try {
 <!-- Actions -->
 <div class="hidden md:flex items-center space-x-6">
 <a class="font-label-md text-label-md text-white hover:text-[#00c8ff] transition-all px-4 py-2" href="login.php">Masuk</a>
-<a class="font-label-md text-label-md btn-neon px-8 py-3 rounded-full hover:scale-105 active:scale-95 transition-all duration-300 font-bold tracking-wide" href="register.php">Daftar</a>
+<a class="font-label-md text-label-md btn-neon px-8 py-3 rounded-full hover:scale-105 active:scale-95 transition-all duration-300 font-bold tracking-wide" href="register.php">Register</a>
 </div>
 <!-- Mobile Menu Toggle -->
 <button class="md:hidden text-white p-2">
