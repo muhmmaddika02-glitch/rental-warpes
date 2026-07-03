@@ -254,7 +254,7 @@ define('GAMEZONE_ACCESS', true);
         
         <footer class="app-footer">
             <div class="float-end d-none d-sm-inline">Gaming Room Booking System</div>
-            <strong>&copy; 2026 GameZone</strong> All rights reserved.
+            <strong>&copy; 2025 GameZone</strong> All rights reserved.
         </footer>
     </div>
     
