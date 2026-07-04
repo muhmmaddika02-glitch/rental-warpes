@@ -3,7 +3,7 @@
 Sistem Manajemen rental warnet & ps berbasis PHP Native dan MySQL untuk mengelola pengguna, booking perangkat, pembayaran, turnamen, promosi, serta laporan operasional.
 
 ---
-## link demo : [https://www.hafizh-dev.my.id/gamezone](https://hafizh-dev.my.id/)
+## link demo : [https://www.hafizh-dev.my.id](https://hafizh-dev.my.id/)
 ## 👥 Tim Pengembang
 
 | Anggota | Branch | Modul |
