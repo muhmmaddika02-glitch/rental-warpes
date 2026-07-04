@@ -368,7 +368,7 @@ try {
 <img alt="GameZone Logo" class="h-12 w-auto" src="https://lh3.googleusercontent.com/aida/AP1WRLvv_sna88_gquLeREqKnQFSvdUzzfIekwsd_LuxNIrfBEPpGUuuisjMVhzdji_CTy24nLt3N5u0lBg6X9gPY9YWfBp5gf8vlMeLuOoj0Xk4Gkr543ZUZZ5oWCJ1TGUtER7nMpDSKGMWgVsRSFkixQAkzrmvVgdMrvF7NAikCo-vLBhQkVfq2aQt8BJKzNxYr0JAzCZTAD_kpTiABdvT0B39VCfKtT94SCCKE2bOalCiXuT1-G7SaC6NF4Q"/>
 </a>
 <p class="font-body-md text-[15px] mb-4 uppercase tracking-widest font-bold text-white/50">PLAY • CONNECT • WIN</p>
-<p class="font-code-sm text-[13px]">GAMEZONE © 2026. Hak cipta dilindungi.</p>
+<p class="font-code-sm text-[13px]">GAMEZONE © 2026.</p>
 </div>
 </footer>
 </body></html>
