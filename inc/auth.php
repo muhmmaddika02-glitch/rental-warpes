@@ -3,6 +3,15 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 
+$sessionTimeout = ini_get('session.gc_maxlifetime') ?: 1800;
+session_set_cookie_params([
+    'lifetime' => $sessionTimeout,
+    'path' => '/',
+    'domain' => '',
+    'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 session_start();
 
 function isLoggedIn(): bool {
@@ -85,6 +94,10 @@ function destroySession(): void {
         setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], (bool) $params['secure'], (bool) $params['httponly']);
     }
     session_destroy();
+}
+
+function getSessionLifetime(): int {
+    return (int) (ini_get('session.gc_maxlifetime') ?: 3600);
 }
 
 function flashMessage(string $message, string $type = 'success'): void {

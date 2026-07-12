@@ -4,34 +4,39 @@ requireStaffOrAdmin();
 
 global $pdo;
 
+$page = max(1, (int)($_GET['p'] ?? 1));
+$perPage = 20;
+$offset = ($page - 1) * $perPage;
+$totalPages = 1;
+$payments = [];
 $filterStatus = $_GET['status'] ?? 'all';
 
 try {
-    $sql = "SELECT p.*, b.id as booking_id, b.total_price, b.booking_date, b.booking_status,
-                   u.name as customer_name, d.name as device_name
-            FROM payments p
-            JOIN bookings b ON p.booking_id = b.id
-            JOIN users u ON b.user_id = u.id
-            JOIN devices d ON b.device_id = d.id";
-    
+    $baseSql = "FROM payments p JOIN bookings b ON p.booking_id = b.id JOIN users u ON b.user_id = u.id JOIN devices d ON b.device_id = d.id";
     $params = [];
-    
+
     if ($filterStatus !== 'all') {
-        $sql .= " WHERE p.payment_status = ?";
+        $where = " WHERE p.payment_status = ?";
         $params[] = $filterStatus;
+    } else {
+        $where = '';
     }
-    
-    $sql .= " ORDER BY p.created_at DESC";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+
+    $countStmt = $pdo->prepare("SELECT COUNT(*) $baseSql $where");
+    $countStmt->execute($params);
+    $totalRecords = (int)$countStmt->fetchColumn();
+    $totalPages = max(1, (int)ceil($totalRecords / $perPage));
+
+    $stmt = $pdo->prepare("SELECT p.*, b.id as booking_id, b.total_price, b.booking_date, b.booking_status,
+                                  u.name as customer_name, d.name as device_name
+                           $baseSql $where ORDER BY p.created_at DESC LIMIT ? OFFSET ?");
+    $stmt->execute([...$params, $perPage, $offset]);
     $payments = $stmt->fetchAll();
-    
+
 } catch (PDOException $e) {
     $errorMessage = 'Database error: ' . $e->getMessage();
 }
 ?>
-
 <div class="row mb-3">
     <div class="col-md-6">
         <form method="GET" class="row g-2">
@@ -60,7 +65,7 @@ try {
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-striped mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Customer</th>
@@ -75,7 +80,12 @@ try {
                 </thead>
                 <tbody>
                     <?php if (empty($payments)): ?>
-                        <tr><td colspan="9" class="text-center py-5 text-muted">No payments found</td></tr>
+                        <tr><td colspan="9" class="text-center py-5">
+                            <div class="py-3">
+                                <i class="bi bi-credit-card-2-back" style="font-size:3rem;color:rgba(255,255,255,0.12);display:block;margin-bottom:0.75rem;"></i>
+                                <p class="text-muted mb-0">Belum ada pembayaran</p>
+                            </div>
+                        </td></tr>
                     <?php else: ?>
                         <?php foreach ($payments as $payment): ?>
                             <tr>
@@ -101,3 +111,5 @@ try {
         </div>
     </div>
 </div>
+
+<?= renderPagination($page, $totalPages, 'dashboard.php?page=payments&status=' . urlencode($filterStatus)) ?>

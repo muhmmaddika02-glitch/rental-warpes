@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../inc/auth.php';
+require_once __DIR__ . '/../../inc/functions.php';
 
 if (!isset($_GET['id']) || (int)$_GET['id'] <= 0) {
     die('Invalid booking ID.');
@@ -101,7 +102,7 @@ $invoiceNumber = $booking['invoice_number'] ?? generateInvoiceNumber($bookingId)
         <button onclick="window.print()" class="btn-print">
             <i class="bi bi-printer"></i> Print / Download PDF
         </button>
-        <a href="../dashboard.php?page=bookings_view&id=<?= $bookingId ?>" class="btn btn-secondary ms-2">Back</a>
+        <a href="../../dashboard.php?page=bookings_view&id=<?= $bookingId ?>" class="btn btn-secondary ms-2">Back</a>
     </div>
     
     <div class="invoice-header">

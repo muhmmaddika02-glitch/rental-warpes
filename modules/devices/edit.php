@@ -6,12 +6,12 @@ global $pdo;
 
 $id = (int) ($_GET['id'] ?? 0);
 if ($id <= 0) {
-    $_SESSION['error_message'] = 'Invalid device ID.';
+    flashMessage('Invalid device ID.', 'danger');
     echo '<script>window.location.href="dashboard.php?page=devices";</script>';
     exit;
 }
 
-$device = null;
+$errorMessage = '';
 
 try {
     $stmt = $pdo->prepare("SELECT * FROM devices WHERE id = ? LIMIT 1");
@@ -19,15 +19,15 @@ try {
     $device = $stmt->fetch();
     
     if (!$device) {
-        $_SESSION['error_message'] = 'Device not found.';
+        flashMessage('Device not found.', 'danger');
         header('Location: dashboard.php?page=devices');
         exit;
     }
 } catch (PDOException $e) {
-    $errorMessage = 'Database error: ' . $e->getMessage();
+    flashMessage('Database error.', 'danger');
+    header('Location: dashboard.php?page=devices');
+    exit;
 }
-
-$errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
@@ -36,51 +36,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? 'available';
     $specification = trim($_POST['specification'] ?? '');
     
+    $allowedStatus = ['available', 'maintenance', 'booked', 'playing'];
+    if (!in_array($status, $allowedStatus, true)) { $status = 'available'; }
+    
     if (empty($name) || empty($type) || empty($pricePerHour)) {
         $errorMessage = 'Name, type, and price per hour are required.';
     } elseif (!is_numeric($pricePerHour) || $pricePerHour <= 0) {
         $errorMessage = 'Price must be a positive number.';
     } else {
-        $imagePath = $device['image'];
+        $uploadDir = __DIR__ . '/../../assets/uploads/';
+        $newImagePath = null;
         
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            $fileType = $_FILES['image']['type'];
-            $fileSize = $_FILES['image']['size'];
-            
-            if (!in_array($fileType, $allowedTypes)) {
+            $allowedMime = ['image/jpeg' => 'jpg', 'image/jpg' => 'jpg', 'image/png' => 'png'];
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mime = $finfo->file($_FILES['image']['tmp_name']);
+            $uploadedFile = $_FILES['image']['tmp_name'];
+
+            if (!isset($allowedMime[$mime])) {
                 $errorMessage = 'Only JPG, JPEG, and PNG images are allowed.';
-            } elseif ($fileSize > 5 * 1024 * 1024) {
+            } elseif ($_FILES['image']['size'] > 5 * 1024 * 1024) {
                 $errorMessage = 'Image must not exceed 5MB.';
             } else {
-                $uploadDir = __DIR__ . '/../../assets/uploads/';
-                $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+                $extension = $allowedMime[$mime];
                 $filename = 'device_' . time() . '_' . uniqid() . '.' . $extension;
-                
-                if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename)) {
-                    if ($device['image'] && file_exists($uploadDir . $device['image'])) {
-                        unlink($uploadDir . $device['image']);
-                    }
-                    $imagePath = $filename;
+
+                if (move_uploaded_file($uploadedFile, $uploadDir . $filename)) {
+                    $newImagePath = $filename;
+                } else {
+                    $errorMessage = 'Failed to upload image. File may be too large or disk full.';
                 }
             }
         }
+    }
+    
+    if (empty($errorMessage)) {
+        $imageToStore = $newImagePath ?? $device['image'];
         
-        if (empty($errorMessage)) {
-            try {
-                $stmt = $pdo->prepare("
-                    UPDATE devices SET name = ?, type = ?, price_per_hour = ?, status = ?, specification = ?, image = ?
-                    WHERE id = ?
-                ");
+        try {
+            $stmt = $pdo->prepare("\n                UPDATE devices SET name = ?, type = ?, price_per_hour = ?, status = ?, specification = ?, image = ?\n                WHERE id = ?\n            ");
 
-                if ($stmt->execute([$name, $type, $pricePerHour, $status, $specification, $imagePath, $id])) {
-                    $_SESSION['success_message'] = 'Device updated successfully!';
-                    echo '<script>window.location.href="dashboard.php?page=devices";</script>';
-                    exit;
+            if ($stmt->execute([$name, $type, $pricePerHour, $status, $specification, $imageToStore, $id])) {
+                if ($newImagePath && $device['image'] && file_exists($uploadDir . $device['image'])) {
+                    unlink($uploadDir . $device['image']);
                 }
-            } catch (PDOException $e) {
-                $errorMessage = 'Database error: ' . $e->getMessage();
+                
+                flashMessage('Device updated successfully!', 'success');
+                echo '<script>window.location.href="dashboard.php?page=devices";</script>';
+                exit;
+            } else {
+                $errorMessage = 'Failed to update device in database.';
             }
+        } catch (PDOException $e) {
+            $errorMessage = 'Database error: ' . $e->getMessage();
         }
     }
 }
@@ -100,6 +108,7 @@ $deviceTypes = ['PlayStation 5', 'PlayStation 4', 'PC Gaming', 'Nintendo Switch'
                 <?php endif; ?>
                 
                 <form method="POST" enctype="multipart/form-data">
+                    <?= csrfField() ?>
                     <div class="mb-3">
                         <label class="form-label">Device Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="name" required

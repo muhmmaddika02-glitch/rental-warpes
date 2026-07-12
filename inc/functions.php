@@ -4,8 +4,22 @@ declare(strict_types=1);
 require_once __DIR__ . '/auth.php';
 
 function escape(string $string): string {
-    global $pdo;
     return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+}
+
+function generateCsrfToken(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrfToken(?string $token): bool {
+    return isset($_SESSION['csrf_token']) && $token && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+function csrfField(): string {
+    return '<input type="hidden" name="csrf_token" value="' . generateCsrfToken() . '">';
 }
 
 function formatRupiah($amount): string {
@@ -24,7 +38,7 @@ function formatDate(?string $date, string $format = 'd M Y H:i'): string {
 }
 
 function generateInvoiceNumber(int $bookingId): string {
-    return 'INV-' . date('Ymd') . '-' . str_pad($bookingId, 6, '0', STR_PAD_LEFT);
+    return 'INV-' . date('Ymd') . '-' . str_pad((string)$bookingId, 6, '0', STR_PAD_LEFT);
 }
 
 function calculateBookingPrice(float $pricePerHour, int $durationHours): float {
@@ -34,24 +48,26 @@ function calculateBookingPrice(float $pricePerHour, int $durationHours): float {
 function checkDeviceAvailability(int $deviceId, string $bookingDate, string $startTime, int $durationHours): bool {
     global $pdo;
     
-    $endTime = date('H:i:s', strtotime($startTime) + ($durationHours * 3600));
+    $startTs = strtotime($bookingDate . ' ' . $startTime);
+    $endTs = $startTs + ($durationHours * 3600);
+    $startDt = date('Y-m-d H:i:s', $startTs);
+    $endDt = date('Y-m-d H:i:s', $endTs);
     
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as total 
         FROM bookings 
         WHERE device_id = :device_id 
-        AND booking_date = :booking_date 
         AND booking_status IN ('pending', 'confirmed', 'playing')
         AND NOT (
-            (:end_time <= start_time OR :start_time >= ADDTIME(start_time, SEC_TO_TIME(duration_hours * 3600)))
+            (:end_dt <= CONCAT(booking_date, ' ', start_time))
+            OR (:start_dt >= CONCAT(booking_date, ' ', ADDTIME(start_time, SEC_TO_TIME(duration_hours * 3600))))
         )
     ");
     
     $stmt->execute([
         'device_id' => $deviceId,
-        'booking_date' => $bookingDate,
-        'end_time' => $endTime,
-        'start_time' => $startTime,
+        'end_dt' => $endDt,
+        'start_dt' => $startDt,
     ]);
     $result = $stmt->fetch();
     
@@ -70,36 +86,38 @@ function addNotification(int $userId, string $title, string $message, string $ty
 }
 
 function getDeviceStatusBadge(string $status): string {
-    $badges = [
-        'available' => '<span class="badge bg-success">Available</span>',
-        'booked' => '<span class="badge bg-warning text-dark">Booked</span>',
-        'playing' => '<span class="badge bg-info text-dark">Playing</span>',
-        'maintenance' => '<span class="badge bg-danger">Maintenance</span>'
+    $map = [
+        'available' => 'green',
+        'booked' => 'orange',
+        'playing' => 'cyan',
+        'maintenance' => 'red'
     ];
-    
-    return $badges[$status] ?? '<span class="badge bg-secondary">Unknown</span>';
+    $label = ucfirst($status);
+    $tone = $map[$status] ?? 'purple';
+    return "<span class=\"badge-neon badge-{$tone}\">{$label}</span>";
 }
 
 function getBookingStatusBadge(string $status): string {
-    $badges = [
-        'pending' => '<span class="badge bg-warning text-dark">Pending</span>',
-        'confirmed' => '<span class="badge bg-primary">Confirmed</span>',
-        'playing' => '<span class="badge bg-info text-dark">Playing</span>',
-        'completed' => '<span class="badge bg-success">Completed</span>',
-        'cancelled' => '<span class="badge bg-danger">Cancelled</span>'
+    $map = [
+        'pending' => 'orange',
+        'confirmed' => 'purple',
+        'playing' => 'cyan',
+        'completed' => 'green',
+        'cancelled' => 'red'
     ];
-    
-    return $badges[$status] ?? '<span class="badge bg-secondary">Unknown</span>';
+    $label = ucfirst($status);
+    $tone = $map[$status] ?? 'purple';
+    return "<span class=\"badge-neon badge-{$tone}\">{$label}</span>";
 }
 
 function getMembershipLevelBadge(string $level): string {
-    $badges = [
-        'bronze' => '<span class="badge bg-warning text-dark">Bronze</span>',
-        'silver' => '<span class="badge bg-secondary">Silver</span>',
-        'gold' => '<span class="badge bg-warning">Gold</span>'
+    $map = [
+        'bronze' => 'badge-membership-bronze',
+        'silver' => 'badge-membership-silver',
+        'gold' => 'badge-membership-gold'
     ];
-    
-    return $badges[$level] ?? '<span class="badge bg-secondary">Unknown</span>';
+    $cls = $map[$level] ?? 'badge-neon badge-purple';
+    return "<span class=\"{$cls}\">" . ucfirst($level) . "</span>";
 }
 
 function getBookingDurationOptions(): array {
@@ -116,22 +134,54 @@ function getBookingDurationOptions(): array {
 }
 
 function getPaymentMethodBadge(string $method): string {
-    $badges = [
-        'qris' => '<span class="badge bg-primary">QRIS</span>',
-        'bank_transfer' => '<span class="badge bg-info text-dark">Bank Transfer</span>',
-        'e_wallet' => '<span class="badge bg-success">E-Wallet</span>'
+    $map = [
+        'qris' => 'purple',
+        'bank_transfer' => 'cyan',
+        'e_wallet' => 'green'
     ];
-    
-    return $badges[$method] ?? '<span class="badge bg-secondary">Unknown</span>';
+    $labels = [
+        'qris' => 'QRIS',
+        'bank_transfer' => 'Bank Transfer',
+        'e_wallet' => 'E-Wallet'
+    ];
+    $tone = $map[$method] ?? 'purple';
+    $label = $labels[$method] ?? ucfirst($method);
+    return "<span class=\"badge-neon badge-{$tone}\">{$label}</span>";
 }
 
 function getPaymentStatusBadge(string $status): string {
-    $badges = [
-        'pending' => '<span class="badge bg-warning text-dark">Pending</span>',
-        'paid' => '<span class="badge bg-success">Paid</span>',
-        'failed' => '<span class="badge bg-danger">Failed</span>',
-        'cancelled' => '<span class="badge bg-secondary">Cancelled</span>'
+    $map = [
+        'pending' => 'orange',
+        'paid' => 'green',
+        'failed' => 'red',
+        'cancelled' => 'purple'
     ];
-    
-    return $badges[$status] ?? '<span class="badge bg-secondary">Unknown</span>';
+    $label = ucfirst($status);
+    $tone = $map[$status] ?? 'purple';
+    return "<span class=\"badge-neon badge-{$tone}\">{$label}</span>";
+}
+
+function getMembershipDiscountRate(string $level): float {
+    return match ($level) {
+        'gold' => 0.10,
+        'silver' => 0.05,
+        default => 0.0,
+    };
+}
+
+function getMembershipDiscountLabel(string $level): string {
+    return match ($level) {
+        'gold' => 'Gold (10% OFF)',
+        'silver' => 'Silver (5% OFF)',
+        default => 'Bronze (No discount)',
+    };
+}
+
+/**
+ * Build a QR Code image URL from a live, keyless QR API.
+ * (Browser fetches it directly — same external-asset model the app already uses for CDNs.)
+ */
+function qrImageUrl(string $data, int $size = 200): string {
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=' . $size . 'x' . $size
+         . '&ecc=L&data=' . urlencode($data);
 }

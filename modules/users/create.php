@@ -15,7 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? 'customer';
     $membershipLevel = $_POST['membership_level'] ?? 'bronze';
     $points = (int) ($_POST['points'] ?? 0);
-    
+
+    $allowedRoles = ['customer', 'staff', 'admin'];
+    $allowedLevels = ['bronze', 'silver', 'gold'];
+    if (!in_array($role, $allowedRoles, true)) { $role = 'customer'; }
+    if (!in_array($membershipLevel, $allowedLevels, true)) { $membershipLevel = 'bronze'; }
+
     $formData = $_POST;
     
     if (empty($name) || empty($email) || empty($password)) {
@@ -40,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
                 
                 if ($stmt->execute([$name, $email, $phone ?: null, $hashedPassword, $role, $membershipLevel, $points])) {
-                    $_SESSION['success_message'] = 'User created successfully!';
+                    flashMessage('User created successfully!', 'success');
                     header('Location: dashboard.php?page=users');
                     exit;
                 } else {
@@ -66,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
                 
                 <form method="POST">
+                    <?= csrfField() ?>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Full Name <span class="text-danger">*</span></label>
@@ -87,7 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" name="password" required minlength="6">
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="password" required minlength="6">
+                                <button type="button" onclick="togglePass('password',this)" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></button>
+                            </div>
                         </div>
                     </div>
                     

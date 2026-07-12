@@ -14,8 +14,26 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-try {
-    $pdo = new PDO($dsn, $db_user, $db_pass, $options);
-} catch (PDOException $e) {
-    die('Database connection failed: ' . $e->getMessage());
+$pdo = null;
+
+function getPdo(): PDO {
+    global $pdo, $dsn, $db_user, $db_pass, $options;
+    if ($pdo === null) {
+        try {
+            $pdo = new PDO($dsn, $db_user, $db_pass, $options);
+            $pdo->setAttribute(PDO::ATTR_TIMEOUT, 5);
+        } catch (PDOException $e) {
+            error_log("Database connection failed: " . $e->getMessage());
+            throw new RuntimeException("Database connection failed");
+        }
+    }
+    return $pdo;
 }
+
+function resetPdo(): void {
+    global $pdo;
+    $pdo = null;
+}
+
+global $pdo;
+$pdo = getPdo();

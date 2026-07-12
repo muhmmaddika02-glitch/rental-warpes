@@ -125,7 +125,7 @@ unset($_SESSION['success_message']);
                     <a href="dashboard.php?page=payments&booking_id=<?= $booking['id'] ?>" class="btn btn-primary">
                         <i class="bi bi-credit-card me-1"></i> Pay Now
                     </a>
-                    <button onclick="if(confirm('Cancel this booking?')) window.location.href='dashboard.php?page=bookings_cancel&id=<?= $booking['id'] ?>'" class="btn btn-outline-danger">
+                    <button onclick="if(confirm('Cancel this booking?')) window.location.href='dashboard.php?page=bookings_cancel&id=<?= $booking['id'] ?>&csrf=<?= generateCsrfToken() ?>'" class="btn btn-outline-danger">
                         <i class="bi bi-x-lg me-1"></i> Cancel Booking
                     </button>
                 <?php endif; ?>

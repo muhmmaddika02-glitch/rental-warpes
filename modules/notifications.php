@@ -3,23 +3,31 @@ if (!defined('GAMEZONE_ACCESS')) { header('Location: ../dashboard.php'); exit; }
 
 global $pdo;
 
+$page = max(1, (int)($_GET['p'] ?? 1));
+$perPage = 20;
+$offset = ($page - 1) * $perPage;
+
 try {
-    $stmt = $pdo->prepare("
-        SELECT * FROM notifications 
-        WHERE user_id = ? 
-        ORDER BY created_at DESC
-    ");
-    $stmt->execute([getCurrentUserId()]);
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ?");
+    $countStmt->execute([getCurrentUserId()]);
+    $totalRecords = (int)$countStmt->fetchColumn();
+    $totalPages = max(1, (int)ceil($totalRecords / $perPage));
+
+    $stmt = $pdo->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?");
+    $stmt->execute([getCurrentUserId(), $perPage, $offset]);
     $notifications = $stmt->fetchAll();
-    
-    $stmt = $pdo->prepare("UPDATE notifications SET is_read = TRUE WHERE user_id = ? AND is_read = FALSE");
-    $stmt->execute([getCurrentUserId()]);
-    
+
+    if (!empty($notifications)) {
+        $ids = array_column($notifications, 'id');
+        $placeholders = rtrim(str_repeat('?,', count($ids)), ',');
+        $stmt = $pdo->prepare("UPDATE notifications SET is_read = TRUE WHERE user_id = ? AND id IN ($placeholders)");
+        $stmt->execute(array_merge([getCurrentUserId()], $ids));
+    }
+
 } catch (PDOException $e) {
     $errorMessage = 'Database error.';
 }
 ?>
-
 <?php if (!empty($errorMessage)): ?>
     <div class="alert alert-danger"><?= htmlspecialchars($errorMessage) ?></div>
 <?php endif; ?>
@@ -71,3 +79,5 @@ try {
         </div>
     </div>
 </div>
+
+<?= renderPagination($page, $totalPages, 'dashboard.php?page=notifications') ?>
