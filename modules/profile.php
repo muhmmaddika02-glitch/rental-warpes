@@ -94,6 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if ($successMessage): ?><div class="alert alert-success"><?= htmlspecialchars($successMessage) ?></div><?php endif; ?>
                 
                 <form method="POST">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="update_profile">
                     <div class="mb-3">
                         <label class="form-label">Name</label>
@@ -135,18 +136,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card-header"><h3 class="card-title"><i class="bi bi-lock me-2"></i>Change Password</h3></div>
             <div class="card-body">
                 <form method="POST">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="change_password">
                     <div class="mb-3">
                         <label class="form-label">Current Password</label>
-                        <input type="password" class="form-control" name="current_password" required>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="current_password" id="current_password" required>
+                            <button type="button" onclick="togglePass('current_password',this)" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">New Password</label>
-                        <input type="password" class="form-control" name="new_password" required minlength="6">
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="new_password" id="new_password" required minlength="6">
+                            <button type="button" onclick="togglePass('new_password',this)" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-control" name="confirm_password" required minlength="6">
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="confirm_password" id="confirm_password" required minlength="6">
+                            <button type="button" onclick="togglePass('confirm_password',this)" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-warning">Change Password</button>
                 </form>
@@ -156,7 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="card">
             <div class="card-header"><h3 class="card-title"><i class="bi bi-clock-history me-2"></i>Account Info</h3></div>
             <div class="card-body">
-                <p><strong>Role:</strong> <span class="badge bg-<?= $user['role'] === 'admin' ? 'danger' : ($user['role'] === 'staff' ? 'warning text-dark' : 'success') ?>"><?= ucfirst($user['role']) ?></span></p>
+                <p><strong>Role:</strong> <?php
+                    $roleTone = $user['role'] === 'admin' ? 'red' : ($user['role'] === 'staff' ? 'gold' : 'green');
+                    ?><span class="badge-neon badge-<?= $roleTone ?>"><?= ucfirst($user['role']) ?></span></p>
                 <p><strong>Member Since:</strong> <?= formatDate($user['created_at'], 'd M Y') ?></p>
                 <p class="mb-0"><strong>Last Updated:</strong> <?= formatDate($user['updated_at'], 'd M Y H:i') ?></p>
             </div>

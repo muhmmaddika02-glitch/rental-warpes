@@ -4,40 +4,57 @@ if (!defined('GAMEZONE_ACCESS')) { header('Location: ../dashboard.php'); exit; }
 global $pdo;
 
 $devices = [];
+$deviceTypes = [];
+$totalPages = 1;
 $errorMessage = '';
 $successMessage = isset($_SESSION['success_message']) ? $_SESSION['success_message'] : '';
 unset($_SESSION['success_message']);
 
 $filterType = $_GET['type'] ?? 'all';
 $filterStatus = $_GET['status'] ?? 'all';
+$page = max(1, (int)($_GET['p'] ?? 1));
+$perPage = 12;
+$offset = ($page - 1) * $perPage;
 
 try {
-    $sql = "SELECT * FROM devices WHERE 1=1";
+    $baseSql = "FROM devices WHERE 1=1";
+    $countSql = "SELECT COUNT(*) $baseSql";
     $params = [];
-    
+
     if ($filterType !== 'all') {
-        $sql .= " AND type = ?";
+        $countSql .= " AND type = ?";
         $params[] = $filterType;
     }
-    
+
     if ($filterStatus !== 'all') {
-        $sql .= " AND status = ?";
+        $countSql .= " AND status = ?";
         $params[] = $filterStatus;
     }
-    
-    $sql .= " ORDER BY name ASC";
-    
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($params);
+    $totalRecords = (int)$countStmt->fetchColumn();
+    $totalPages = max(1, (int)ceil($totalRecords / $perPage));
+
+    $dataSql = "SELECT * $baseSql";
+    if ($filterType !== 'all') {
+        $dataSql .= " AND type = ?";
+    }
+    if ($filterStatus !== 'all') {
+        $dataSql .= " AND status = ?";
+    }
+    $dataSql .= " ORDER BY name ASC LIMIT ? OFFSET ?";
+
+    $stmt = $pdo->prepare($dataSql);
+    $stmt->execute([...$params, $perPage, $offset]);
     $devices = $stmt->fetchAll();
-    
+
     $deviceTypes = $pdo->query("SELECT DISTINCT type FROM devices ORDER BY type")->fetchAll(PDO::FETCH_COLUMN);
-    
+
 } catch (PDOException $e) {
     $errorMessage = 'Database error: ' . $e->getMessage();
 }
 ?>
-
 <div class="row mb-3">
     <div class="col-md-8">
         <form method="GET" action="dashboard.php" class="row g-2">
@@ -46,9 +63,7 @@ try {
                 <select name="type" class="form-select" onchange="this.form.submit()">
                     <option value="all">All Types</option>
                     <?php foreach ($deviceTypes as $type): ?>
-                        <option value="<?= htmlspecialchars($type) ?>" <?= $filterType === $type ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($type) ?>
-                        </option>
+                        <option value="<?= htmlspecialchars($type) ?>" <?= $filterType === $type ? 'selected' : '' ?>><?= htmlspecialchars($type) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -68,9 +83,7 @@ try {
     </div>
     <div class="col-md-4 text-end">
         <?php if (isAdmin() || isStaff()): ?>
-            <a href="dashboard.php?page=devices_create" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i> Add Device
-            </a>
+            <a href="dashboard.php?page=devices_create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Add Device</a>
         <?php endif; ?>
     </div>
 </div>
@@ -78,6 +91,13 @@ try {
 <?php if ($successMessage): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i><?= htmlspecialchars($successMessage) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<?php $flash = getFlashMessage(); if ($flash): ?>
+    <div class="alert alert-<?= $flash['type'] === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show" role="alert">
+        <i class="bi <?= $flash['type'] === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill' ?> me-2"></i><?= htmlspecialchars($flash['text']) ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 <?php endif; ?>
@@ -105,50 +125,48 @@ try {
         <?php foreach ($devices as $device): ?>
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card device-card h-100">
-                    <?php if ($device['image']): ?>
+                    <?php if ($device['image'] && file_exists(__DIR__ . '/../../assets/uploads/' . $device['image'])): ?>
                         <img src="assets/uploads/<?= htmlspecialchars($device['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($device['name']) ?>" style="height: 200px; object-fit: cover;">
                     <?php else: ?>
-                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
-                            <i class="bi bi-controller text-white" style="font-size: 4rem;"></i>
+                        <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: rgba(255,0,255,0.1);">
+                            <i class="bi bi-controller" style="font-size: 4rem; color: #ff00ff;"></i>
                         </div>
                     <?php endif; ?>
-                    
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title mb-0"><?= htmlspecialchars($device['name']) ?></h5>
                             <?= getDeviceStatusBadge($device['status']) ?>
                         </div>
-                        
-                        <p class="text-muted small mb-2">
-                            <i class="bi bi-tag me-1"></i><?= htmlspecialchars($device['type']) ?>
-                        </p>
-                        
+                        <p class="text-muted small mb-2"><i class="bi bi-tag me-1"></i><?= htmlspecialchars($device['type']) ?></p>
                         <p class="card-text small text-muted mb-3">
                             <?= htmlspecialchars(substr($device['specification'] ?? 'No specifications', 0, 100)) ?>
                             <?= strlen($device['specification'] ?? '') > 100 ? '...' : '' ?>
                         </p>
-                        
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 mb-0 text-primary">
+                            <span class="h5 mb-0" style="color: #ff00ff;">
                                 <?= formatRupiah($device['price_per_hour']) ?><small class="text-muted">/hour</small>
                             </span>
-                            
                             <div class="btn-group">
                                 <?php if ($device['status'] === 'available' && isCustomer()): ?>
-                                    <a href="dashboard.php?page=bookings_create&device_id=<?= $device['id'] ?>" class="btn btn-sm btn-success">
-                                        <i class="bi bi-calendar-plus"></i> Book
-                                    </a>
+                                    <a href="dashboard.php?page=bookings_create&device_id=<?= $device['id'] ?>" class="btn btn-sm btn-success"><i class="bi bi-calendar-plus"></i> Book</a>
                                 <?php endif; ?>
-                                
                                 <?php if (isAdmin() || isStaff()): ?>
-                                    <a href="dashboard.php?page=devices_edit&id=<?= $device['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    
+                                    <a href="dashboard.php?page=devices_edit&id=<?= $device['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
+                                    <?php if ($device['status'] !== 'maintenance'): ?>
+                                        <form method="POST" action="dashboard.php?page=devices_toggle_maintenance" class="d-inline">
+                                            <input type="hidden" name="id" value="<?= $device['id'] ?>">
+                                            <?= csrfField() ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Set Maintenance"><i class="bi bi-tools"></i></button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form method="POST" action="dashboard.php?page=devices_toggle_maintenance" class="d-inline">
+                                            <input type="hidden" name="id" value="<?= $device['id'] ?>">
+                                            <?= csrfField() ?>
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Set Available"><i class="bi bi-check-lg"></i></button>
+                                        </form>
+                                    <?php endif; ?>
                                     <?php if (isAdmin()): ?>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $device['id'] ?>">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $device['id'] ?>"><i class="bi bi-trash"></i></button>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>
@@ -156,7 +174,7 @@ try {
                     </div>
                 </div>
             </div>
-            
+
             <?php if (isAdmin()): ?>
             <div class="modal fade" id="deleteModal<?= $device['id'] ?>" tabindex="-1">
                 <div class="modal-dialog">
@@ -172,7 +190,7 @@ try {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <a href="dashboard.php?page=devices_delete&id=<?= $device['id'] ?>" class="btn btn-danger">Delete</a>
+                            <a href="dashboard.php?page=devices_delete&id=<?= $device['id'] ?>&csrf=<?= generateCsrfToken() ?>" class="btn btn-danger">Delete</a>
                         </div>
                     </div>
                 </div>
@@ -181,3 +199,10 @@ try {
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
+
+<?php
+$baseUrl = 'dashboard.php?page=devices';
+if ($filterType !== 'all') $baseUrl .= '&type=' . urlencode($filterType);
+if ($filterStatus !== 'all') $baseUrl .= '&status=' . urlencode($filterStatus);
+echo renderPagination($page, $totalPages, $baseUrl);
+?>

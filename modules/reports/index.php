@@ -137,16 +137,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Revenue',
                     data: <?= json_encode(array_column($revenueData, 'revenue')) ?>,
-                    borderColor: '#7C3AED',
-                    backgroundColor: 'rgba(124,58,237,0.1)',
+                    borderColor: '#ff00ff',
+                    backgroundColor: 'rgba(255,0,255,0.1)',
                     tension: 0.4,
                     yAxisID: 'y'
                 },
                 {
                     label: 'Bookings',
                     data: <?= json_encode(array_column($revenueData, 'bookings')) ?>,
-                    borderColor: '#06B6D4',
-                    backgroundColor: 'rgba(6,182,212,0.1)',
+                    borderColor: '#00ffff',
+                    backgroundColor: 'rgba(0,255,255,0.1)',
                     tension: 0.4,
                     yAxisID: 'y1'
                 }
@@ -164,4 +164,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>

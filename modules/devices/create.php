@@ -2,8 +2,6 @@
 if (!defined('GAMEZONE_ACCESS')) { header('Location: ../dashboard.php'); exit; }
 requireStaffOrAdmin();
 
-global $pdo;
-
 $errorMessage = '';
 $formData = [];
 
@@ -14,6 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'] ?? 'available';
     $specification = trim($_POST['specification'] ?? '');
     
+    if (!in_array($status, ['available', 'maintenance'], true)) { $status = 'available'; }
+
     $formData = $_POST;
     
     if (empty($name) || empty($type) || empty($pricePerHour)) {
@@ -24,13 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $imagePath = null;
         
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            $fileType = $_FILES['image']['type'];
-            $fileSize = $_FILES['image']['size'];
+            $allowedMime = ['image/jpeg' => 'jpg', 'image/jpg' => 'jpg', 'image/png' => 'png'];
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mime = $finfo->file($_FILES['image']['tmp_name']);
             
-            if (!in_array($fileType, $allowedTypes)) {
+            if (!isset($allowedMime[$mime])) {
                 $errorMessage = 'Only JPG, JPEG, and PNG images are allowed.';
-            } elseif ($fileSize > 5 * 1024 * 1024) {
+            } elseif ($_FILES['image']['size'] > 5 * 1024 * 1024) {
                 $errorMessage = 'Image size must not exceed 5MB.';
             } else {
                 $uploadDir = __DIR__ . '/../../assets/uploads/';
@@ -38,27 +38,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     mkdir($uploadDir, 0755, true);
                 }
                 
-                $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+                $extension = $allowedMime[$mime];
                 $filename = 'device_' . time() . '_' . uniqid() . '.' . $extension;
                 $uploadPath = $uploadDir . $filename;
                 
                 if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
                     $imagePath = $filename;
                 } else {
-                    $errorMessage = 'Failed to upload image.';
+                    $errorMessage = 'Failed to upload image. File may be too large or disk full.';
                 }
             }
         }
         
         if (empty($errorMessage)) {
             try {
-                $stmt = $pdo->prepare("
-                    INSERT INTO devices (name, type, price_per_hour, status, specification, image) 
-                    VALUES (?, ?, ?, ?, ?, ?)
+                $stmt = $pdo->prepare("\n                    INSERT INTO devices (name, type, price_per_hour, status, specification, image) \n                    VALUES (?, ?, ?, ?, ?, ?)
                 ");
                 
                 if ($stmt->execute([$name, $type, $pricePerHour, $status, $specification, $imagePath])) {
-                    $_SESSION['success_message'] = 'Device added successfully!';
+                    flashMessage('Device added successfully!', 'success');
                     header('Location: dashboard.php?page=devices');
                     exit;
                 } else {
@@ -89,6 +87,7 @@ $deviceTypes = ['PlayStation 5', 'PlayStation 4', 'PC Gaming', 'Nintendo Switch'
                 <?php endif; ?>
                 
                 <form method="POST" enctype="multipart/form-data">
+                    <?= csrfField() ?>
                     <div class="mb-3">
                         <label for="name" class="form-label">Device Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="name" name="name" required

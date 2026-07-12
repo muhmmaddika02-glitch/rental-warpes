@@ -1,6 +1,12 @@
 <?php
 if (!defined('GAMEZONE_ACCESS')) { header('Location: ../dashboard.php'); exit; }
 
+if (!verifyCsrfToken($_GET['csrf'] ?? null)) {
+    flashMessage('Permintaan tidak valid.', 'danger');
+    header('Location: dashboard.php?page=bookings');
+    exit;
+}
+
 global $pdo;
 
 $id = (int) ($_GET['id'] ?? 0);
@@ -27,8 +33,8 @@ try {
         exit;
     }
     
-    if (!in_array($booking['booking_status'], ['pending'])) {
-        flashMessage('Only pending bookings can be cancelled.', 'warning');
+    if (!in_array($booking['booking_status'], ['pending', 'confirmed'])) {
+        flashMessage('Only pending or confirmed bookings can be cancelled.', 'warning');
         header('Location: dashboard.php?page=bookings');
         exit;
     }
@@ -40,6 +46,9 @@ try {
         
         $stmt = $pdo->prepare("UPDATE payments SET payment_status = 'cancelled' WHERE booking_id = ?");
         $stmt->execute([$id]);
+        
+        $stmt = $pdo->prepare("UPDATE devices SET status = 'available' WHERE id = ? AND status IN ('booked', 'playing')");
+        $stmt->execute([$booking['device_id']]);
         
         addNotification($booking['user_id'], 'Booking Cancelled', 'Your booking #' . $id . ' has been cancelled.', 'system');
         

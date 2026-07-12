@@ -126,7 +126,7 @@ try {
                                     
                                     <?php if ($booking['booking_status'] === 'pending' && (isCustomer() || isAdmin())): ?>
                                         <button type="button" class="btn btn-sm btn-danger" 
-                                                onclick="if(confirm('Cancel this booking?')) window.location.href='dashboard.php?page=bookings_cancel&id=<?= $booking['id'] ?>'">
+                                                onclick="if(confirm('Cancel this booking?')) window.location.href='dashboard.php?page=bookings_cancel&id=<?= $booking['id'] ?>&csrf=<?= generateCsrfToken() ?>'">
                                             <i class="bi bi-x-lg"></i>
                                         </button>
                                     <?php endif; ?>
@@ -134,7 +134,7 @@ try {
                                     <?php if ($booking['booking_status'] === 'confirmed' && (isStaff() || isAdmin())): ?>
                                         <button type="button" class="btn btn-sm btn-primary" 
                                                 onclick="if(confirm('Mark as Playing?')) { 
-                                                    fetch('api/bookings-api.php?action=update_status&id=<?= $booking['id'] ?>&status=playing')
+                                                    fetch('api/bookings-api.php?action=update_status&id=<?= $booking['id'] ?>&status=playing&csrf=<?= generateCsrfToken() ?>')
                                                     .then(() => location.reload());
                                                 }">
                                             <i class="bi bi-play-fill"></i> Playing
@@ -144,7 +144,7 @@ try {
                                     <?php if ($booking['booking_status'] === 'playing' && (isStaff() || isAdmin())): ?>
                                         <button type="button" class="btn btn-sm btn-success" 
                                                 onclick="if(confirm('Mark as Completed?')) { 
-                                                    fetch('api/bookings-api.php?action=update_status&id=<?= $booking['id'] ?>&status=completed')
+                                                    fetch('api/bookings-api.php?action=update_status&id=<?= $booking['id'] ?>&status=completed&csrf=<?= generateCsrfToken() ?>')
                                                     .then(() => location.reload());
                                                 }">
                                             <i class="bi bi-check-lg"></i> Complete

@@ -6,6 +6,16 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../inc/auth.php';
 require_once __DIR__ . '/../inc/functions.php';
 
+requireLogin();
+if (!isStaff() && !isAdmin()) {
+    echo json_encode(['success' => false, 'message' => 'Forbidden.']);
+    exit;
+}
+if (!verifyCsrfToken($_GET['csrf'] ?? null)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid request.']);
+    exit;
+}
+
 $action = $_GET['action'] ?? '';
 $response = ['success' => false, 'message' => 'Invalid action.'];
 
@@ -30,6 +40,8 @@ try {
             
             if (!$booking) {
                 $response = ['success' => false, 'message' => 'Booking not found.'];
+            } elseif ($booking['booking_status'] === $status) {
+                $response = ['success' => true, 'message' => 'Status unchanged.'];
             } else {
                 $stmt = $pdo->prepare("UPDATE bookings SET booking_status = ? WHERE id = ?");
                 $stmt->execute([$status, $bookingId]);
@@ -41,8 +53,10 @@ try {
                     $stmt = $pdo->prepare("UPDATE devices SET status = 'available' WHERE id = ?");
                     $stmt->execute([$booking['device_id']]);
                     
-                    $stmt = $pdo->prepare("UPDATE users SET points = points + FLOOR(? / 10000) WHERE id = ?");
-                    $stmt->execute([$booking['total_price'], $booking['user_id']]);
+                    if ($booking['booking_status'] !== 'completed') {
+                        $stmt = $pdo->prepare("UPDATE users SET points = points + FLOOR(? / 10000) WHERE id = ?");
+                        $stmt->execute([$booking['total_price'], $booking['user_id']]);
+                    }
                 }
                 
                 $response = ['success' => true, 'message' => 'Status updated.'];

@@ -50,7 +50,7 @@ try {
                                 <td><?= $p['usage_limit'] ?? '∞' ?></td>
                                 <td><?= $p['is_active'] ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>' ?></td>
                                 <td class="text-end">
-                                    <button onclick="if(confirm('Delete promotion?')) window.location.href='dashboard.php?page=promotions_delete&id=<?= $p['id'] ?>'" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    <button onclick="if(confirm('Delete promotion?')) window.location.href='dashboard.php?page=promotions_delete&id=<?= $p['id'] ?>&csrf=<?= generateCsrfToken() ?>'" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

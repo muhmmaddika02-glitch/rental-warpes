@@ -11,6 +11,8 @@ if ($id <= 0) {
     exit;
 }
 
+$errorMessage = '';
+
 try {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
     $stmt->execute([$id]);
@@ -22,10 +24,10 @@ try {
         exit;
     }
 } catch (PDOException $e) {
-    $errorMessage = 'Database error.';
+    flashMessage('Database error.', 'danger');
+    header('Location: dashboard.php?page=users');
+    exit;
 }
-
-$errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
@@ -35,7 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? 'customer';
     $membershipLevel = $_POST['membership_level'] ?? 'bronze';
     $points = (int) ($_POST['points'] ?? 0);
-    
+
+    $allowedRoles = ['customer', 'staff', 'admin'];
+    $allowedLevels = ['bronze', 'silver', 'gold'];
+    if (!in_array($role, $allowedRoles, true)) { $role = 'customer'; }
+    if (!in_array($membershipLevel, $allowedLevels, true)) { $membershipLevel = 'bronze'; }
+
     if (empty($name) || empty($email)) {
         $errorMessage = 'Name and email are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -68,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 if (empty($errorMessage)) {
-                    $_SESSION['success_message'] = 'User updated successfully!';
+                    flashMessage('User updated successfully!', 'success');
                     header('Location: dashboard.php?page=users');
                     exit;
                 }
@@ -92,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
                 
                 <form method="POST">
+                    <?= csrfField() ?>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Full Name <span class="text-danger">*</span></label>
@@ -113,7 +121,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Password (leave empty to keep current)</label>
-                            <input type="password" class="form-control" name="password" minlength="6">
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="password" minlength="6">
+                                <button type="button" onclick="togglePass('password',this)" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></button>
+                            </div>
                         </div>
                     </div>
                     

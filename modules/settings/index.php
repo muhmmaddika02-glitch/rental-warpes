@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="card-header"><h3 class="card-title"><i class="bi bi-gear me-2"></i>System Settings</h3></div>
     <div class="card-body">
         <form method="POST">
+            <?= csrfField() ?>
             <div class="row">
                 <?php foreach ($settings as $setting): ?>
                     <div class="col-md-6 mb-3">
