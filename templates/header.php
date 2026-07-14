@@ -14,6 +14,7 @@ $navItems = $navItems ?? [];
       </span>
       <span class="text-xl font-black tracking-tight">GameZone</span>
     </a>
+    <a href="#devices" class="btn-neon btn-neon-ghost text-sm px-5 py-2.5">galery</a>
     <?php if ($navItems): ?>
     <div class="hidden md:flex items-center gap-10 text-[15px] font-bold text-slate-200">
       <?php foreach ($navItems as $label => $href): ?>
