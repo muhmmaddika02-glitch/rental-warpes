@@ -3,28 +3,28 @@
 Sistem Manajemen rental warnet & ps berbasis PHP Native dan MySQL untuk mengelola pengguna, booking perangkat, pembayaran, turnamen, promosi, serta laporan operasional.
 
 ---
-## link demo : [hafizh-dev.my.id](https://hafizh-dev.my.id/)
+## link demo : [muhammad hafizh ramadhan (19251193)h-dev.my.id](https://muhammad hafizh ramadhan (19251193)h-dev.my.id/)
 ## 👥 Tim Pengembang
 
 | Anggota | Branch | Modul |
 |----------|----------|----------|
-| Hafiz | `anggota/hafiz` | Authentication & User Management |
-| Rafli | `anggota/rafli` | Device Management |
-| Dika | `anggota/dika` | Booking System & API |
-| Iyas | `anggota/iyas` | Payment & Invoice |
-| Mico | `anggota/mico` | Promotion, Tournament & Notification |
-| Adi | `anggota/adi` | Dashboard, Reports & Settings |
+| muhammad hafizh ramadhan (19251193) | `anggota/muhammad hafizh ramadhan (19251193)` | Authentication & User Management |
+| ⁠Rafli Hera Sumadi (19250069) | `anggota/⁠Rafli Hera Sumadi (19250069)` | Device Management |
+| m andika farhansyah (19250604) | `anggota/m andika farhansyah (19250604)` | Booking System & API |
+| muhammad iyas arkan (19252261) | `anggota/muhammad iyas arkan (19252261)` | Payment & Invoice |
+| Mico Kurniawan (19251446) | `anggota/Mico Kurniawan (19251446)` | Promotion, Tournament & Notification |
+| Adi hermawandi (19250225) | `anggota/Adi hermawandi (19250225)` | Dashboard, Reports & Settings |
 
 ---
 
 ## 📂 Struktur Pembagian Tugas
 
-### 👤 Hafiz
+### 👤 muhammad hafizh ramadhan (19251193)
 **Authentication & User Management**
 
 Branch:
 ```bash
-hafiz
+muhammad hafizh ramadhan (19251193)
 ```
 
 Modul:
@@ -49,13 +49,13 @@ Fitur:
 
 ---
 
-### 👤 Rafli
+### 👤 ⁠Rafli Hera Sumadi (19250069)
 **Device Management**
 
 Branch:
 
 ```bash
-rafli
+⁠Rafli Hera Sumadi (19250069)
 ```
 
 Modul:
@@ -72,13 +72,13 @@ Fitur:
 
 ---
 
-### 👤 Dika
+### 👤 m andika farhansyah (19250604)
 **Booking & API**
 
 Branch:
 
 ```bash
-dika (main)
+m andika farhansyah (19250604) (main)
 ```
 
 Modul:
@@ -96,13 +96,13 @@ Fitur:
 
 ---
 
-### 👤 Iyas
+### 👤 muhammad iyas arkan (19252261)
 **Payment & Invoice**
 
 Branch:
 
 ```bash
-iyas
+muhammad iyas arkan (19252261)
 ```
 
 Modul:
@@ -120,13 +120,13 @@ Fitur:
 
 ---
 
-### 👤 Mico
+### 👤 Mico Kurniawan (19251446)
 **Promotion, Tournament & Notification**
 
 Branch:
 
 ```bash
-mico
+Mico Kurniawan (19251446)
 ```
 
 Modul:
@@ -146,13 +146,13 @@ Fitur:
 
 ---
 
-### 👤 Adi
+### 👤 Adi hermawandi (19250225)
 **Dashboard, Reports & Settings**
 
 Branch:
 
 ```bash
-adi
+Adi hermawandi (19250225)
 ```
 
 Modul:
@@ -188,13 +188,13 @@ cd REPOSITORY
 ### Pindah ke Branch Masing-Masing
 
 ```bash
-git checkout anggota/hafiz
+git checkout anggota/muhammad hafizh ramadhan (19251193)
 ```
 
 atau
 
 ```bash
-git checkout anggota/rafli
+git checkout anggota/⁠Rafli Hera Sumadi (19250069)
 ```
 
 ### Commit Perubahan
