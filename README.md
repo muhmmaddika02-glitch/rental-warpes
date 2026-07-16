@@ -3,7 +3,7 @@
 Sistem Manajemen rental warnet & ps berbasis PHP Native dan MySQL untuk mengelola pengguna, booking perangkat, pembayaran, turnamen, promosi, serta laporan operasional.
 
 ---
-## link demo : [muhammad hafizh ramadhan (19251193)h-dev.my.id](https://muhammad hafizh ramadhan (19251193)h-dev.my.id/)
+## link demo : []()
 ## 👥 Tim Pengembang
 
 | Anggota | Branch | Modul |
